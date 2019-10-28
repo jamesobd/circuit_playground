@@ -33,7 +33,7 @@ def getLocation(accel):
     """
     absAccel = [abs(a) for a in accel]
     maxVal = max(absAccel)
-    if sum(absAccel)>11.5 or maxVal<7: #Shaking or wrong angle
+    if sum(absAccel)>11.5 or maxVal<6.5: #Shaking or wrong angle
         return(-1)
     else:
         argIdx = [i for i in range(len(accel)) if absAccel[i]==maxVal][-1]
@@ -42,7 +42,7 @@ def getLocation(accel):
         else:
             return(argIdx)
 
-def checkPattern(sequence = (0,3,0,1,4), numOfOccurances = 3):
+def checkPattern(sequence = [0,3,0,1,4], numOfOccurances = 3):
     """
     This function will take in the specific squence that needs to be done to open the lock
     Locations 2 and 5 (which are flat and upsidedown) don't currently count as locations
@@ -54,15 +54,14 @@ def checkPattern(sequence = (0,3,0,1,4), numOfOccurances = 3):
     while seq!=sequence:
         #print('The sequence is {}'.format(sequence))
         while not all([nLoc==prevLoc[0] for nLoc in prevLoc[1:]]) :
-            print('The prevLoc is {}'.format(prevLoc))
-
             time.sleep(0.1)
             loc = getLocation(lis3dh.acceleration[:])
-            print('The loc is {}'.format(loc))
             if loc not in (-1,2,5,seq[-1]): #Ignore the home position and upsidedown and the same positions as before
                 prevLoc=prevLoc[1:]+[loc]
-                print('we got a new one: {}'.format(loc))
+        print('we got a new one: {}'.format(loc))
         seq= seq[1:]+[loc]
+        prevLoc[-1]=-1
+        print('The current sequence is: {}'.format(seq))
     return()
 
 def unlock(time=5):
@@ -82,8 +81,6 @@ def flash_pixels(flash_speed=0.5):
     pixels.show()
     time.sleep(flash_speed)
 
-
-
 def main():
     print('Serial Works')
     flash_pixels()
@@ -91,10 +88,12 @@ def main():
     pixels.show()
 
     while True:
-        checkPattern(sequence=(0,3,0))
+        checkPattern(sequence=[0,3,0])
         unlock()
 
-        for i in range(20):
+        for i in range(2):
             flash_pixels()
-
+            pixels.fill((0, 0, 0))
+            pixels.show()
+            
 main()
