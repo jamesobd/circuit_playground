@@ -52,19 +52,17 @@ def checkPattern(sequence = (0,3,0,1,4), numOfOccurances = 3):
     prevLoc = [i for i in range(0,-numOfOccurances,-1)] #Lists previous location measurements, negatives to prevent assignment
     seq=[-1 for _ in sequence]
     while seq!=sequence:
-        print('The sequence is {}'.format(sequence))
+        #print('The sequence is {}'.format(sequence))
         while not all([nLoc==prevLoc[0] for nLoc in prevLoc[1:]]) :
             print('The prevLoc is {}'.format(prevLoc))
 
             time.sleep(0.1)
             loc = getLocation(lis3dh.acceleration[:])
             print('The loc is {}'.format(loc))
-            prevLoc=prevLoc[1:]+[loc]
-        if loc not in (-1,2,5,seq[-1]): #Ignore the home position and upsidedown and the same positions as before
-            pixels.fill((255, 0, 0))
-            pixels.show()
-            print('we got a new one: {}'.format(loc))
-            seq= seq[1:]+[loc]
+            if loc not in (-1,2,5,seq[-1]): #Ignore the home position and upsidedown and the same positions as before
+                prevLoc=prevLoc[1:]+[loc]
+                print('we got a new one: {}'.format(loc))
+        seq= seq[1:]+[loc]
     return()
 
 def unlock(time=5):
@@ -87,6 +85,7 @@ def flash_pixels(flash_speed=0.5):
 
 
 def main():
+    print('Serial Works')
     flash_pixels()
     pixels.fill((0, 0, 0))
     pixels.show()
