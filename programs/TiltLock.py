@@ -27,6 +27,13 @@ i2c = busio.I2C(board.ACCELEROMETER_SCL, board.ACCELEROMETER_SDA)
 lis3dh = adafruit_lis3dh.LIS3DH_I2C(i2c, address=0x19)
 lis3dh.range = adafruit_lis3dh.RANGE_8_G
 
+# Adjust these constants based on the playground's relative orientation
+LEFT = 0
+INWARD = 1
+FLAT = 2
+RIGHT = 3
+OUTWARD = 4
+UPSIDE_DOWN = 5
 
 def getLocation(accel):
     """
@@ -49,18 +56,24 @@ def getLocation(accel):
 
     returns -1 if accelration is too high or max value not close to one directions
     """
-    pixels[0] = (int(simpleio.map_range(accel[1], 0, -9.8, 0, 255)), int(simpleio.map_range(accel[1], 0, -9.8, 0, 255)),
-                 int(simpleio.map_range(accel[1], 0, -9.8, 0, 255)))
-    pixels[9] = (int(simpleio.map_range(accel[1], 0, -9.8, 0, 255)), int(simpleio.map_range(accel[1], 0, -9.8, 0, 255)),
-                 int(simpleio.map_range(accel[1], 0, -9.8, 0, 255)))
-    pixels[2] = (int(simpleio.map_range(accel[0], 0, 9.8, 0, 255)), int(simpleio.map_range(accel[0], 0, 9.8, 0, 255)),
-                 int(simpleio.map_range(accel[0], 0, 9.8, 0, 255)))
-    pixels[4] = (int(simpleio.map_range(accel[1], 0, 9.8, 0, 255)), int(simpleio.map_range(accel[1], 0, 9.8, 0, 255)),
-                 int(simpleio.map_range(accel[1], 0, 9.8, 0, 255)))
-    pixels[5] = (int(simpleio.map_range(accel[1], 0, 9.8, 0, 255)), int(simpleio.map_range(accel[1], 0, 9.8, 0, 255)),
-                 int(simpleio.map_range(accel[1], 0, 9.8, 0, 255)))
-    pixels[7] = (int(simpleio.map_range(accel[0], 0, -9.8, 0, 255)), int(simpleio.map_range(accel[0], 0, -9.8, 0, 255)),
-                 int(simpleio.map_range(accel[0], 0, -9.8, 0, 255)))
+    pixels[0] = (int(simpleio.map_range(accel[1], -1, -9.8, 0, 255)),
+                 int(simpleio.map_range(accel[1], -1, -9.8, 0, 255)),
+                 int(simpleio.map_range(accel[1], -1, -9.8, 0, 255)))
+    pixels[9] = (int(simpleio.map_range(accel[1], -1, -9.8, 0, 255)), 
+                 int(simpleio.map_range(accel[1], -1, -9.8, 0, 255)),
+                 int(simpleio.map_range(accel[1], -1, -9.8, 0, 255)))
+    pixels[2] = (int(simpleio.map_range(accel[0], 1, 9.8, 0, 255)),
+                 int(simpleio.map_range(accel[0], 1, 9.8, 0, 255)),
+                 int(simpleio.map_range(accel[0], 1, 9.8, 0, 255)))
+    pixels[4] = (int(simpleio.map_range(accel[1], 1, 9.8, 0, 255)),
+                 int(simpleio.map_range(accel[1], 1, 9.8, 0, 255)),
+                 int(simpleio.map_range(accel[1], 1, 9.8, 0, 255)))
+    pixels[5] = (int(simpleio.map_range(accel[1], 1, 9.8, 0, 255)),
+                 int(simpleio.map_range(accel[1], 1, 9.8, 0, 255)),
+                 int(simpleio.map_range(accel[1], 1, 9.8, 0, 255)))
+    pixels[7] = (int(simpleio.map_range(accel[0], -1, -9.8, 0, 255)),
+                 int(simpleio.map_range(accel[0], -1, -9.8, 0, 255)),
+                 int(simpleio.map_range(accel[0], -1, -9.8, 0, 255)))
 
     pixels.show()
     absAccel = [abs(a) for a in accel]
@@ -75,7 +88,7 @@ def getLocation(accel):
             return (argIdx)
 
 
-def checkPattern(sequence=[4, 1, 4, 2, 5], numOfOccurances=2):
+def checkPattern(sequence=[LEFT, RIGHT, LEFT], numOfOccurances=2):
     """
     This function will take in the specific sequence that needs to be done to open the lock
     Locations 2 and 5 (which are flat and upside down) don't currently count as locations
@@ -86,15 +99,10 @@ def checkPattern(sequence=[4, 1, 4, 2, 5], numOfOccurances=2):
                range(0, -numOfOccurances, -1)]  # Lists previous location measurements, negatives to prevent assignment
     seq = [-1 for _ in sequence]
     while seq != sequence:
-        # print('The sequence is {}'.format(sequence))
         while not all([nLoc == prevLoc[0] for nLoc in prevLoc[1:]]):
-            # time.sleep(0.1)
             loc = getLocation(lis3dh.acceleration[:])
-            print(loc)
-            if loc not in (-1, 3, 0, seq[
-                -1]):  # (-1,2,5,seq[-1]): #Ignore the home position and upsidedown and the same positions as before
+            if loc not in (-1, FLAT, UPSIDE_DOWN, seq[-1]):  #Ignore the flat and upside-down down positions and the previous position
                 prevLoc = prevLoc[1:] + [loc]
-        print('we got a new one: {}'.format(loc))
         seq = seq[1:] + [loc]
         prevLoc[-1] = -1
         print('The current sequence is: {}'.format(seq))
@@ -129,13 +137,12 @@ def flash_pixels(flash_speed=0.5):
     time.sleep(flash_speed)
 
 
-print('Serial Works')
 flash_pixels()
 pixels.fill((0, 0, 0))
 pixels.show()
 
 while True:
-    checkPattern(sequence=[0, 3, 0])
+    checkPattern(sequence=[LEFT, RIGHT, LEFT, OUTWARD, INWARD])
     unlock()
 
 
