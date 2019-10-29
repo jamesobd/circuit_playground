@@ -11,8 +11,10 @@ import busio
 import neopixel
 import digitalio
 
+# Lock switch setup
 lock_switch = digitalio.DigitalInOut(board.A1)
 lock_switch.direction = digitalio.Direction.OUTPUT
+lock_switch.value = False
 
 pixels = neopixel.NeoPixel(board.NEOPIXEL, 10, brightness=.2)
 pixels.fill((0, 0, 0))
@@ -77,12 +79,14 @@ def checkPattern(sequence=[0, 3, 0, 1, 4], numOfOccurances=3):
 
 def unlock(delay=5):
     """Write to a pin a positive 3.7V for delay seconds"""
+    print('unlocked')
     pixels.fill((0, 255, 0))
     pixels.show()
     lock_switch.value = True
 
     time.sleep(delay)
 
+    print('locked')
     pixels.fill(0)
     pixels.show()
     lock_switch.value = False
@@ -111,11 +115,6 @@ def main():
     while True:
         checkPattern(sequence=[0, 3, 0])
         unlock()
-
-        for i in range(2):
-            flash_pixels()
-            pixels.fill((0, 0, 0))
-            pixels.show()
 
 
 main()
