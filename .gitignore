@@ -3,3 +3,6 @@
 
 # The root code.py program
 /code.py
+
+# The circuitpython bundle
+/adafruit-circuitpython-bundle-5.x-mpy-20191022/
