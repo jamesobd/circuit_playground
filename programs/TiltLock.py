@@ -35,7 +35,7 @@ def getLocation(accel):
     4 - Outward (USB on Bottom)
     5 - Upside Down (Buttons down)
 
-    returns -1 if accelration is too high or max value not close to one directions
+    returns -1 if acceleration is too high or max value not close to one directions
     """
     absAccel = [abs(a) for a in accel]
     maxVal = max(absAccel)
@@ -51,9 +51,9 @@ def getLocation(accel):
 
 def checkPattern(sequence=[0, 3, 0, 1, 4], numOfOccurances=3):
     """
-    This function will take in the specific squence that needs to be done to open the lock
-    Locations 2 and 5 (which are flat and upsidedown) don't currently count as locations
-    The number of occurances is the number of times the same position must be measured to count it
+    This function will take in the specific sequence that needs to be done to open the lock
+    Locations 2 and 5 (which are flat and upside down) don't currently count as locations
+    The number of occurrences is the number of times the same position must be measured to count it
         - This will hopefully address issues with shaking it or knocking on it etc
     """
     prevLoc = [i for i in
@@ -64,6 +64,7 @@ def checkPattern(sequence=[0, 3, 0, 1, 4], numOfOccurances=3):
         while not all([nLoc == prevLoc[0] for nLoc in prevLoc[1:]]):
             time.sleep(0.1)
             loc = getLocation(lis3dh.acceleration[:])
+            print(loc)
             if loc not in (
                     -1, 2, 5, seq[-1]):  # Ignore the home position and upsidedown and the same positions as before
                 prevLoc = prevLoc[1:] + [loc]
@@ -74,13 +75,13 @@ def checkPattern(sequence=[0, 3, 0, 1, 4], numOfOccurances=3):
     return ()
 
 
-def unlock(time=5):
-    """Write to a pin a positive 3.7V for period of "time" seconds"""
+def unlock(delay=5):
+    """Write to a pin a positive 3.7V for delay seconds"""
     pixels.fill((0, 255, 0))
     pixels.show()
     lock_switch.value = True
 
-    time.sleep(time)
+    time.sleep(delay)
 
     pixels.fill(0)
     pixels.show()
