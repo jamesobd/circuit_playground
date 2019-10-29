@@ -2,6 +2,16 @@
 """
 Spyder Editor
 
+
+#Directions changed
+Current - Previous
+ forward - upside down  5
+left - forward
+backward - home(flat)
+right - back
+
+
+
 This is a temporary script file.
 """
 import time
@@ -10,19 +20,6 @@ import adafruit_lis3dh
 import busio
 import neopixel
 import digitalio
-
-# Lock switch setup
-lock_switch = digitalio.DigitalInOut(board.A1)
-lock_switch.direction = digitalio.Direction.OUTPUT
-lock_switch.value = False
-
-pixels = neopixel.NeoPixel(board.NEOPIXEL, 10, brightness=.2)
-pixels.fill((0, 0, 0))
-pixels.show()
-
-i2c = busio.I2C(board.ACCELEROMETER_SCL, board.ACCELEROMETER_SDA)
-lis3dh = adafruit_lis3dh.LIS3DH_I2C(i2c, address=0x19)
-lis3dh.range = adafruit_lis3dh.RANGE_8_G
 
 
 def getLocation(accel):
@@ -37,11 +34,18 @@ def getLocation(accel):
     4 - Outward (USB on Bottom)
     5 - Upside Down (Buttons down)
 
-    returns -1 if acceleration is too high or max value not close to one directions
+    #New Directions
+
+    5 - Forward (outward)
+    4 - left
+    2 - backward (inward)
+    1 - Right
+
+    returns -1 if accelration is too high or max value not close to one directions
     """
     absAccel = [abs(a) for a in accel]
     maxVal = max(absAccel)
-    if sum(absAccel) > 11.5 or maxVal < 6.5:  # Shaking or wrong angle
+    if sum(absAccel) > 11.5 or maxVal < 5:  # Shaking or wrong angle
         return (-1)
     else:
         argIdx = [i for i in range(len(accel)) if absAccel[i] == maxVal][-1]
@@ -51,11 +55,11 @@ def getLocation(accel):
             return (argIdx)
 
 
-def checkPattern(sequence=[0, 3, 0, 1, 4], numOfOccurances=3):
+def checkPattern(sequence=[4, 1, 4, 2, 5], numOfOccurances=2):
     """
-    This function will take in the specific sequence that needs to be done to open the lock
-    Locations 2 and 5 (which are flat and upside down) don't currently count as locations
-    The number of occurrences is the number of times the same position must be measured to count it
+    This function will take in the specific squence that needs to be done to open the lock
+    Locations 2 and 5 (which are flat and upsidedown) don't currently count as locations
+    The number of occurances is the number of times the same position must be measured to count it
         - This will hopefully address issues with shaking it or knocking on it etc
     """
     prevLoc = [i for i in
@@ -64,11 +68,9 @@ def checkPattern(sequence=[0, 3, 0, 1, 4], numOfOccurances=3):
     while seq != sequence:
         # print('The sequence is {}'.format(sequence))
         while not all([nLoc == prevLoc[0] for nLoc in prevLoc[1:]]):
-            time.sleep(0.1)
+            # time.sleep(0.1)
             loc = getLocation(lis3dh.acceleration[:])
-            print(loc)
-            if loc not in (
-                    -1, 2, 5, seq[-1]):  # Ignore the home position and upsidedown and the same positions as before
+            if loc not in (-1, 3, 0, seq[-1]):  # (-1,2,5,seq[-1]): #Ignore the home position and upsidedown and the same positions as before
                 prevLoc = prevLoc[1:] + [loc]
         print('we got a new one: {}'.format(loc))
         seq = seq[1:] + [loc]
@@ -77,44 +79,35 @@ def checkPattern(sequence=[0, 3, 0, 1, 4], numOfOccurances=3):
     return ()
 
 
-def unlock(delay=5):
-    """Write to a pin a positive 3.7V for delay seconds"""
-    print('unlocked')
-    pixels.fill((0, 255, 0))
-    pixels.show()
-    lock_switch.value = True
-
-    time.sleep(delay)
-
-    print('locked')
-    pixels.fill(0)
-    pixels.show()
-    lock_switch.value = False
-
-
-def flash_pixels(flash_speed=0.5):
-    pixels.fill((255, 0, 0))
-    pixels.show()
-    time.sleep(flash_speed)
-
-    pixels.fill((0, 255, 0))
-    pixels.show()
-    time.sleep(flash_speed)
-
-    pixels.fill((0, 0, 255))
-    pixels.show()
-    time.sleep(flash_speed)
+def unlock(pin, waitTime=10):
+    """Write to a pin a positive 5V for period of "time" seconds"""
+    pin.value = True
+    time.sleep(waitTime)
+    pin.value = False
+    return ()
 
 
 def main():
     print('Serial Works')
-    flash_pixels()
-    pixels.fill((0, 0, 0))
-    pixels.show()
-
+    unlock(lock)
     while True:
-        checkPattern(sequence=[0, 3, 0])
-        unlock()
+        checkPattern(sequence=[4, 1, 4, 2, 5])
+        unlock(lock)
 
+        pixels.fill((255, 0, 0))
+        pixels.show()
+        time.sleep(3)
+        pixels.fill((0, 0, 0))
+
+
+lock = digitalio.DigitalInOut(board.D9)
+lock.direction = digitalio.Direction.OUTPUT
+pixels = neopixel.NeoPixel(board.NEOPIXEL, 10, brightness=.2)
+pixels.fill((0, 0, 0))
+pixels.show()
+
+i2c = busio.I2C(board.ACCELEROMETER_SCL, board.ACCELEROMETER_SDA)
+lis3dh = adafruit_lis3dh.LIS3DH_I2C(i2c, address=0x19)
+lis3dh.range = adafruit_lis3dh.RANGE_8_G
 
 main()
