@@ -12,6 +12,7 @@ import board
 import array
 import audiobusio
 
+
 ### General setup
 
 def mean(values):

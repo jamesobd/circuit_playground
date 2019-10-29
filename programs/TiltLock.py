@@ -11,6 +11,7 @@ import busio
 import simpleio
 import neopixel
 import digitalio
+import mic_utils
 
 # Lock switch setup
 lock_switch = digitalio.DigitalInOut(board.D9)
@@ -28,12 +29,12 @@ lis3dh = adafruit_lis3dh.LIS3DH_I2C(i2c, address=0x19)
 lis3dh.range = adafruit_lis3dh.RANGE_8_G
 
 # Adjust these constants based on the playground's relative orientation
-LEFT = 0
-INWARD = 1
-FLAT = 2
-RIGHT = 3
-OUTWARD = 4
-UPSIDE_DOWN = 5
+LEFT = 4
+INWARD = 2
+FLAT = 0
+RIGHT = 1
+OUTWARD = 5
+UPSIDE_DOWN = 3
 
 def getLocation(accel):
     """
@@ -101,6 +102,7 @@ def checkPattern(sequence=[LEFT, RIGHT, LEFT], numOfOccurances=2):
     while seq != sequence:
         while not all([nLoc == prevLoc[0] for nLoc in prevLoc[1:]]):
             loc = getLocation(lis3dh.acceleration[:])
+            print(loc)
             if loc not in (-1, FLAT, UPSIDE_DOWN, seq[-1]):  #Ignore the flat and upside-down down positions and the previous position
                 prevLoc = prevLoc[1:] + [loc]
         seq = seq[1:] + [loc]
