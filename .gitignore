@@ -1,8 +1,6 @@
-# PyCharm
-.idea
+# IDE Settings
+/.idea/
+/.vscode/
 
-# The root code.py program
-/code.py
-
-# The circuitpython bundle
-/adafruit-circuitpython-bundle-5.x-mpy-20191022/
+# Python interpreter libraries (PyCharm configuration)
+/venv/

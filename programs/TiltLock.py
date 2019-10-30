@@ -11,7 +11,6 @@ import busio
 import simpleio
 import neopixel
 import digitalio
-import mic_utils
 
 # Lock switch setup
 lock_switch = digitalio.DigitalInOut(board.D9)
@@ -35,6 +34,7 @@ FLAT = 0
 RIGHT = 1
 OUTWARD = 5
 UPSIDE_DOWN = 3
+
 
 def getLocation(accel):
     """
@@ -79,7 +79,7 @@ def getLocation(accel):
     pixels.show()
     absAccel = [abs(a) for a in accel]
     maxVal = max(absAccel)
-    if sum(absAccel) > 11.5 or maxVal < 5:  # Shaking or wrong angle
+    if sum(absAccel) > 20 or maxVal < 4:  # Shaking or wrong angle
         return (-1)
     else:
         argIdx = [i for i in range(len(accel)) if absAccel[i] == maxVal][-1]
