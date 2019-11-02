@@ -1,4 +1,6 @@
 ### Import statements
+import gc
+import sys
 import time
 import board
 import touchio
@@ -27,10 +29,11 @@ def get_brightness():
     pixels.fill(0)
     pixels.show()
     time.sleep(delay)
-    return simpleio.map_range(light.value, 0, 20000, 0, 1)
+    return simpleio.map_range(light.value, 0, 20000, .1, 1)
 
 
 ### General setup
+max_ram = 256000
 delay = 0.01 # Main loop delay
 display_mode = 0
 button_a_pressed = False
@@ -69,9 +72,9 @@ touch_TX = touchio.TouchIn(board.TX)
 mic = mic_utils.SuperMic()
 
 ### CRON jobs
-def one_second_jobs():
-    cron.remove(0)
-cron.add(one_second_jobs, 1)
+# def one_second_jobs():
+#     # cron.remove(0)
+# cron.add(one_second_jobs, 1)
 
 def ten_second_jobs():
     global brightness
@@ -115,7 +118,7 @@ while True:
     if button_a.value and not button_a_pressed:
         button_a_pressed = button_a.value
         # Change display_mode
-        display_mode = (display_mode + 1) % 4
+        display_mode = (display_mode + 1) % 5
     else:
         button_a_pressed = button_a.value
 
@@ -136,6 +139,7 @@ while True:
         pixels[0] = (cpu_temp_color_red, 0, cpu_temp_color_blue) # CPU temperature
         pixels[1] = (therm_temp_color_red, 0, therm_temp_color_blue) # Thermistor temperature
         pixels[2] = neopixel_utils.wheel(int(simpleio.map_range(mic.get_mic_magnitude(), 15, 1000, 0, 255)), brightness) # Mic sound magnitude
+        pixels[3] = (int(simpleio.map_range(max_ram - gc.mem_free(), 0, 256000, 0, 255) * brightness), int(simpleio.map_range(gc.mem_free(), 0, 256000, 0, 255) * brightness), 0)
     elif display_mode == 1:
         # Display the CPU temperature
         pixels.fill((cpu_temp_color_red, 0, cpu_temp_color_blue))
@@ -143,7 +147,8 @@ while True:
         pixels.fill((therm_temp_color_red, 0, therm_temp_color_blue))
     elif display_mode == 3:
         pixels.fill(neopixel_utils.wheel(int(simpleio.map_range(mic.get_mic_magnitude(), 15, 1000, 0, 255)), brightness))
-
+    elif display_mode == 4:
+        pixels.fill((int(simpleio.map_range(max_ram - gc.mem_free(), 0, 256000, 0, 255) * brightness), int(simpleio.map_range(gc.mem_free(), 0, 256000, 0, 255) * brightness), 0))
 
     pixels.show()
 
