@@ -1,4 +1,4 @@
-### Import statements
+# Import statements
 import gc
 import sys
 import time
@@ -16,7 +16,7 @@ import neopixel_utils
 import mic_utils
 import photosensor_utils
 
-### Functions
+# Functions
 def get_brightness():
     """
     Returns the light intensity detected by the photo sensor converted from a scale of (0, 20000) to (0, 1)
@@ -32,7 +32,7 @@ def get_brightness():
     return simpleio.map_range(light.value, 0, 20000, .1, 1)
 
 
-### General setup
+# General setup
 max_ram = 256000
 delay = 0.01 # Main loop delay
 display_mode = 0
@@ -41,25 +41,30 @@ button_b_pressed = False
 brightnessObj1 = data.SuperInt(1).value
 brightnessObj2 = data.SuperInt(2).value
 
-### Pixel setup
+# LED setup
 pixels = neopixel.NeoPixel(board.NEOPIXEL, 10, brightness=1, auto_write=False)
 
-### Button setup
+# Button setup
 button_a = digitalio.DigitalInOut(board.BUTTON_A)
 button_a.switch_to_input(pull=digitalio.Pull.DOWN)
 button_b = digitalio.DigitalInOut(board.BUTTON_B)
 button_b.switch_to_input(pull=digitalio.Pull.DOWN)
 
-### Photo sensor setup
+# Switch setup
+switch = digitalio.DigitalInOut(board.D7)
+switch.direction = digitalio.Direction.INPUT
+switch.pull = digitalio.Pull.UP
+
+# Photo sensor setup
 light = analogio.AnalogIn(board.LIGHT)
 brightness = get_brightness()
 init_brightness = brightness
 # brightness = 1 # override
 
-### Temperature setup
+# Temperature setup
 thermistor = adafruit_thermistor.Thermistor(board.TEMPERATURE, 10000, 10000, 25, 3950)
 
-### Touch setup
+# Touch setup
 touch_A1 = touchio.TouchIn(board.A1)
 touch_A2 = touchio.TouchIn(board.A2)
 touch_A3 = touchio.TouchIn(board.A3)
@@ -68,10 +73,16 @@ touch_A5 = touchio.TouchIn(board.A5)
 touch_A6 = touchio.TouchIn(board.A6)
 touch_TX = touchio.TouchIn(board.TX)
 
-### Audio setup
+# Mic setup
 mic = mic_utils.SuperMic()
 
-### CRON jobs
+# Speaker setup
+speaker_enable = digitalio.DigitalInOut(board.SPEAKER_ENABLE)
+speaker_enable.direction = digitalio.Direction.OUTPUT
+speaker_enable.value = False
+
+
+# CRON jobs
 # def one_second_jobs():
 #     # cron.remove(0)
 # cron.add(one_second_jobs, 1)
@@ -81,9 +92,12 @@ def ten_second_jobs():
     # brightness = get_brightness()
 cron.add(ten_second_jobs, 10)
 
-### The main loop
+# The main loop
 while True:
-    ### Sensor value aliases
+    # Speaker control
+    speaker_enable.value = switch.value
+
+    # Sensor value aliases
     cpu_temp = microcontroller.cpu.temperature
     therm_temp = thermistor.temperature
 
