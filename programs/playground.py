@@ -16,6 +16,7 @@ import neopixel_utils
 import mic_utils
 import photosensor_utils
 
+
 # Functions
 def get_brightness():
     """
@@ -32,14 +33,16 @@ def get_brightness():
     return simpleio.map_range(light.value, 0, 20000, .1, 1)
 
 
-# General setup
+# Variables
+start_time = time.monotonic()
 max_ram = 256000
-delay = 0.01 # Main loop delay
+delay = 0.01  # Main loop delay
 display_mode = 0
 button_a_pressed = False
 button_b_pressed = False
 brightnessObj1 = data.SuperInt(1).value
 brightnessObj2 = data.SuperInt(2).value
+file_write_status = None  # State of file system (None, 'rw', 'error', 'out_of_space')
 
 # LED setup
 pixels = neopixel.NeoPixel(board.NEOPIXEL, 10, brightness=1, auto_write=False)
@@ -87,10 +90,31 @@ speaker_enable.value = False
 #     # cron.remove(0)
 # cron.add(one_second_jobs, 1)
 
-def ten_second_jobs():
-    global brightness
-    # brightness = get_brightness()
-cron.add(ten_second_jobs, 10)
+# def ten_second_jobs():
+#     global brightness
+#     # brightness = get_brightness()
+#
+#
+# cron.add(ten_second_jobs, 10)
+
+def one_minute_jobs():
+    global file_write_status
+    try:
+        with open("/runtime.log", "a") as fp:
+            now_time = time.monotonic()
+            diff_time = now_time - start_time
+            fp.write('{0:f}\n'.format(diff_time))
+            fp.flush()
+            file_write_status = 'rw'
+    except OSError as e:
+        if e.args[0] == 28:
+            file_write_status = 'out_of_space'
+        else:
+            file_write_status = 'error'
+
+
+cron.add(one_minute_jobs, 60)
+one_minute_jobs()
 
 # The main loop
 while True:
@@ -101,10 +125,22 @@ while True:
     cpu_temp = microcontroller.cpu.temperature
     therm_temp = thermistor.temperature
 
+    # Set the file system color based on file system status
+    file_write_status_color = tuple(
+        int(l * r) for l, r in zip(neopixel_utils.RED, (brightness, brightness, brightness)))
+    if file_write_status == 'out_of_space':
+        file_write_status_color = tuple(
+            int(l * r) for l, r in zip(neopixel_utils.YELLOW, (brightness, brightness, brightness)))
+    elif file_write_status == 'rw':
+        file_write_status_color = tuple(
+            int(l * r) for l, r in zip(neopixel_utils.GREEN, (brightness, brightness, brightness)))
+
     # Calculate color to display for temperatures
-    cpu_temp_color_red = int(simpleio.map_range(cpu_temp,20,40,0,255)) # Scale the value of temp from (20, 40) to (0, 255)
+    cpu_temp_color_red = int(
+        simpleio.map_range(cpu_temp, 20, 40, 0, 255))  # Scale the value of temp from (20, 40) to (0, 255)
     cpu_temp_color_blue = 255 - cpu_temp_color_red
-    therm_temp_color_red = int(simpleio.map_range(therm_temp, 15, 40, 0, 255)) # Scale the value of temp from (15, 40) to (0, 255)
+    therm_temp_color_red = int(
+        simpleio.map_range(therm_temp, 15, 40, 0, 255))  # Scale the value of temp from (15, 40) to (0, 255)
     therm_temp_color_blue = 255 - therm_temp_color_red
     # adjust color brightness based on ambient brightness
     cpu_temp_color_red = int(cpu_temp_color_red * brightness)
@@ -132,7 +168,7 @@ while True:
     if button_a.value and not button_a_pressed:
         button_a_pressed = button_a.value
         # Change display_mode
-        display_mode = (display_mode + 1) % 5
+        display_mode = (display_mode + 1) % 6
     else:
         button_a_pressed = button_a.value
 
@@ -150,19 +186,26 @@ while True:
     if display_mode == 0:
         pixels.fill(0)
         # Display different sensor outputs for each light
-        pixels[0] = (cpu_temp_color_red, 0, cpu_temp_color_blue) # CPU temperature
-        pixels[1] = (therm_temp_color_red, 0, therm_temp_color_blue) # Thermistor temperature
-        pixels[2] = neopixel_utils.wheel(int(simpleio.map_range(mic.get_mic_magnitude(), 15, 1000, 0, 255)), brightness) # Mic sound magnitude
-        pixels[3] = (int(simpleio.map_range(max_ram - gc.mem_free(), 0, 256000, 0, 255) * brightness), int(simpleio.map_range(gc.mem_free(), 0, 256000, 0, 255) * brightness), 0)
+        pixels[0] = (cpu_temp_color_red, 0, cpu_temp_color_blue)  # CPU temperature
+        pixels[1] = (therm_temp_color_red, 0, therm_temp_color_blue)  # Thermistor temperature
+        pixels[2] = neopixel_utils.wheel(int(simpleio.map_range(mic.get_mic_magnitude(), 15, 1000, 0, 255)),
+                                         brightness)  # Mic sound magnitude
+        pixels[3] = (int(simpleio.map_range(max_ram - gc.mem_free(), 0, 256000, 0, 255) * brightness),
+                     int(simpleio.map_range(gc.mem_free(), 0, 256000, 0, 255) * brightness), 0)
+        pixels[4] = (file_write_status_color)  # File system status color
     elif display_mode == 1:
         # Display the CPU temperature
         pixels.fill((cpu_temp_color_red, 0, cpu_temp_color_blue))
     elif display_mode == 2:
         pixels.fill((therm_temp_color_red, 0, therm_temp_color_blue))
     elif display_mode == 3:
-        pixels.fill(neopixel_utils.wheel(int(simpleio.map_range(mic.get_mic_magnitude(), 15, 1000, 0, 255)), brightness))
+        pixels.fill(
+            neopixel_utils.wheel(int(simpleio.map_range(mic.get_mic_magnitude(), 15, 1000, 0, 255)), brightness))
     elif display_mode == 4:
-        pixels.fill((int(simpleio.map_range(max_ram - gc.mem_free(), 0, 256000, 0, 255) * brightness), int(simpleio.map_range(gc.mem_free(), 0, 256000, 0, 255) * brightness), 0))
+        pixels.fill((int(simpleio.map_range(max_ram - gc.mem_free(), 0, 256000, 0, 255) * brightness),
+                     int(simpleio.map_range(gc.mem_free(), 0, 256000, 0, 255) * brightness), 0))
+    elif display_mode == 5:
+        pixels.fill(file_write_status_color)  # File system status color
 
     pixels.show()
 
