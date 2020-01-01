@@ -36,6 +36,7 @@ RIGHT = 1
 OUTWARD = 5
 UPSIDE_DOWN = 3
 
+
 def getLocation(accel):
     """
     This function returns the current orientation with the values
@@ -79,7 +80,7 @@ def getLocation(accel):
     pixels.show()
     absAccel = [abs(a) for a in accel]
     maxVal = max(absAccel)
-    if sum(absAccel) > 11.5 or maxVal < 5:  # Shaking or wrong angle
+    if sum(absAccel) > 20 or maxVal < 4:  # Shaking or wrong angle
         return (-1)
     else:
         argIdx = [i for i in range(len(accel)) if absAccel[i] == maxVal][-1]
