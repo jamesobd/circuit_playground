@@ -19,7 +19,7 @@ lock_switch.direction = digitalio.Direction.OUTPUT
 lock_switch.value = False
 
 # Pixel setup
-pixels = neopixel.NeoPixel(board.NEOPIXEL, 10, brightness=.2)
+pixels = neopixel.NeoPixel(board.A1, 50, brightness=.2)
 pixels.fill((0, 0, 0))
 pixels.show()
 
@@ -61,7 +61,7 @@ def getLocation(accel):
     pixels[0] = (int(simpleio.map_range(accel[1], -1, -9.8, 0, 255)),
                  int(simpleio.map_range(accel[1], -1, -9.8, 0, 255)),
                  int(simpleio.map_range(accel[1], -1, -9.8, 0, 255)))
-    pixels[9] = (int(simpleio.map_range(accel[1], -1, -9.8, 0, 255)), 
+    pixels[9] = (int(simpleio.map_range(accel[1], -1, -9.8, 0, 255)),
                  int(simpleio.map_range(accel[1], -1, -9.8, 0, 255)),
                  int(simpleio.map_range(accel[1], -1, -9.8, 0, 255)))
     pixels[2] = (int(simpleio.map_range(accel[0], 1, 9.8, 0, 255)),
