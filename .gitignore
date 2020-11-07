@@ -1,6 +1,7 @@
 # IDE Settings
 /.idea/
 /.vscode/
+.ipynb_checkpoints/
 
 # Python interpreter libraries (PyCharm configuration)
 /venv/
