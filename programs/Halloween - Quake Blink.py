@@ -12,6 +12,7 @@ import simpleio
 import random
 from adafruit_circuitplayground.express import cpx
 
+
 def start_note(freq):
     cpx.start_tone(freq)
 
@@ -128,6 +129,23 @@ def play_victory():
     rests = [0,0,0,0.075,0,0]
     play_sequence(notes, lengths, rests)
 
+def blink_pix(pixs,blink_time,blink_color):
+    curr_color = pixels[0]
+    change_color(pixs,blink_color)
+    time.sleep(blink_time)
+    change_color(pixs,curr_color)
+
+def all_blink(pixs,light_intervals,blink_colors,intensity):
+    blink_colors_new = intensity_color_converter(blink_colors, intensity)
+    for i in range(len(light_intervals)):
+        change_color(pixs,blink_colors_new[i])
+        time.sleep(light_intervals[i])
+
+def intensity_color_converter(colors, intensity):
+    newColors=[]
+    for color in colors:
+        newColors.append(tuple(int(c*intensity) for c in color))
+    return(newColors)
 
 RED = (255, 0, 0)
 YELLOW = (255, 150, 0)
@@ -138,7 +156,7 @@ PURPLE = (180, 0, 255)
 WHITE = (255, 255, 255)
 ORANGE = (255,33,0)
 OFF = (0, 0, 0)
-colors = [RED,YELLOW,GREEN,BLUE,ORANGE]
+colors = [RED,ORANGE]
 #Notes
 G4=391.995
 G5=783.99
@@ -149,35 +167,28 @@ E5=659.26
 allowed_timing_error,total_perc_error = 0.15,10
 
 #Code Setup
-num_interval_range = [2,5]
-wait_times = [0.4,0.8]
-tones = [523.25,262]
+num_interval_range = [2,1,1,]
+relative_times = [2,1,1,1,4,1,2,1,1,1,1,3,1,1,3,1]
+absolute_times = [i*0.4 for i in relative_times]
+blink_colors_r = [RED,OFF]*8
+blink_colors_o = [ORANGE,OFF]*8
 
 # Mic setup
 mic = mic_utils.SuperMic()
 threshold = 0.15 #value from 0 to 1
 
 #Pixel Setup
-pixCount = 10
-pixels = setup_lights() #cp for circuit python, pin otherwise
+#pixCount = 10
 
-#pixCount = 50
-#pixels = setup_lights(lights = 'A1', pixNum=pixCount) #cp for circuit python, pin otherwise
-pixels.brightness = 0.3
+#pixels = setup_lights() #cp for circuit python, pin otherwise
 
-startColor = None
+pixCount = 50
+pixels = setup_lights(lights = 'A1', pixNum=pixCount) #cp for circuit python, pin otherwise
+pixels.brightness = 0.8
+allPixs = range(pixCount)
 while True:
-    #Start with specific color filled (or none)
-    prevColor = startColor
-    startColor = random.choice([color for color in colors if color!=prevColor]) #Dont make it the save as before
-    print(startColor)
-    pixels.fill(startColor)
-    pixels.show()
-    #get Code
-    code = generate_code(num_interval_range, wait_times )
 
-    got_the_code = False
-    while got_the_code == False:
-        give_code(code, [0,pixCount-1], 0.15, WHITE)
-        got_the_code = check_code(code,12)
-    play_victory()
+    all_blink(allPixs, absolute_times, blink_colors_r,0.35)
+    all_blink(allPixs, absolute_times, blink_colors_o,0.35)
+    all_blink(allPixs, absolute_times, blink_colors_r,0.15)
+    all_blink(allPixs, absolute_times, blink_colors_o,0.15)
